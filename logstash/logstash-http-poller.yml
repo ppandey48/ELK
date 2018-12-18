@@ -1,0 +1,22 @@
+input {
+  http_poller {
+    urls => {
+        method => get
+        url => "https://api/some"
+        headers => {
+          Accept => "application/json"
+        }
+     }
+    request_timeout => 60
+    # Supports "cron", "every", "at" and "in" schedules by rufus scheduler
+    schedule => { cron => "* * * * * UTC"}
+    codec => "json"
+    # A hash of request metadata info (timing, response headers, etc.) will be sent here
+    metadata_target => "http_poller_metadata"
+    tags => healthcheck
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+}

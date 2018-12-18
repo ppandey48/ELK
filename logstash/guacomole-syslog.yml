@@ -1,0 +1,32 @@
+#for guacomole syslog
+#fields used:
+#timestamp
+#distt
+#name
+#pid
+#text
+
+input { 
+  stdin { }
+}
+
+filter {
+  
+  grok {
+    match => { "message" => ["%{SYSLOGTIMESTAMP:timestamp} %{DATA:distt} (?<service>%{NOTSPACE:name}\[%{INT:pid}\]): %{GREEDYDATA:text}"] }
+  }
+  kv { 
+    source => "text" 
+    #value_split => "="
+    #field_split => ";"
+    #trim_key => " "
+    trim_value => "\s"
+  }
+  mutate {
+    remove_field => ["message"]
+  } 
+}
+
+output {
+  stdout { codec => rubydebug }
+}

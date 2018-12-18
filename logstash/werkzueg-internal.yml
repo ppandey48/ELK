@@ -1,0 +1,21 @@
+#log format:- [2018-03-19T22:36:58,19][INFO][werkzeug._internal][87][] 127.0.0.1 - - [19/Mar/2018 22:36:58] "GET /socket.io/?EIO=3&transport=polling&t=M91wHYM&b64=1 HTTP/1.1" 404 - 
+#pattern:- \[%{TIMESTAMP_ISO8601:timestamp}\]\[%{LOGLEVEL:loglevel}\]\[%{GREEDYDATA:func}\]\[%{INT:number}\]\S+ %{IP:ip} - - \[(?<time>%{MONTHDAY:day}/%{MONTH:month}/%{YEAR:year} %{HOUR:hour}:%{MINUTE:minute}:%{SECOND:second})\] %{GREEDYDATA:text} %{INT:status}
+
+input {
+  stdin {}
+}
+
+filter {
+  grok {
+    match => { "message" => ["\[%{TIMESTAMP_ISO8601:timestamp}\]\[%{LOGLEVEL:loglevel}\]\[%{GREEDYDATA:data}\]\[%{INT:number}\]\S+ %{IP:ip} - - \[(?<time>%{MONTHDAY:day}/%{MONTH:month}/%{YEAR:year} %{HOUR:hour}:%{MINUTE:minute}:%{SECOND:second})\] %{GREEDYDATA:text} %{INT:status}"] }  
+  }
+   
+  mutate { 
+    remove_field => [ "message", "time", "day", "month", "year", "hour", "minute", "second"] 
+  }  
+}	
+
+output {
+  stdout { codec => rubydebug }
+
+}

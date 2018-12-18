@@ -1,0 +1,30 @@
+input {
+  kafka {
+    bootstrap_servers => "host:port"
+    topics => ["kafka-topic"]
+    add_field => {"key" => "value"}
+  }
+}
+
+filter {
+  grok {
+    match => {"message" =>"\[(?<timestamp>%{TIMESTAMP_ISO8601})\] %{LOGLEVEL:loglevel} \((?<logger>[A-Za-z0-9$_.]+)\) %{GREEDYDATA:text}$"}  
+  }
+  if "_grokparsefailure" in [tags] {
+    grok {
+      match => { "message" => ["\[%{TIMESTAMP_ISO8601:timestamp}\] %{LOGLEVEL:loglevel} %{GREEDYDATA:text}"] }
+    }
+  }
+  if ([loglevel] in ["INFO"]) {
+    drop { }
+  }
+  mutate {
+    remove_field => "message"
+    add_field => { "index_prefix" => "kafka" }
+  }
+}	
+
+output {
+  stdout { codec => rubydebug }
+
+}

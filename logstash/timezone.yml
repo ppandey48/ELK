@@ -1,0 +1,35 @@
+#[2018-04-27T01:04:31.113] INFO {"code":783,"type": "server started", "text":"Starting signaling server at port => 8007"}  {../../app.js:14:8}
+
+
+input { 
+  stdin { }
+}
+
+filter {
+  grok {
+    match => { "message" => "\[(?<timestamf>%{TIMESTAMP_ISO8601})\] %{LOGLEVEL:loglevel} %{GREEDYDATA:json}  %{GREEDYDATA:file}" }
+  }
+  date {
+    match => [ "timestamf", "ISO8601" ]
+    timezone => "Etc/GMT+9"
+    target => "timestamf"
+  }
+  kv { 
+    source => "json" 
+    value_split => ":"
+    field_split => ","
+    remove_char_value => "\""
+    remove_char_key => "\""
+    trim_key => "\{" 
+  } 
+  mutate {
+    remove_tag => ["_grokparsefailure"]
+    remove_field => [ "multivalue" ]     
+  }
+}
+
+output {
+  stdout {
+    codec => rubydebug
+  }
+}

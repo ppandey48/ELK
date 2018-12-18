@@ -1,0 +1,38 @@
+#configuration for pagerduty alerts
+
+input {
+  stdin { }
+}
+
+filter {
+  grok {
+    match => { "message" => ["\[%{TIMESTAMP_ISO8601:timestamf}\] %{LOGLEVEL:loglevel} %{DATA:logger} \[%{DATA:multivalue}\] %{DATA:text} - %{GREEDYDATA:json}"] }  
+  }
+  date {
+    match => [ "timestamf", "ISO8601" ]
+    target => "timestamf"
+  }
+  json {
+      source => "json"
+  }
+  kv {
+    source => ["multivalue"]
+    value_split => ":"
+    field_split => ", "
+    trim_key => " "
+  }
+}
+
+output {
+    stdout { codec => rubydebug }
+    pagerduty {
+    event_type => "trigger"
+    description => "%{loglevel} - %{text}"
+    details => {
+      timestamp => "%{@timestamp}"
+      message => "%{message}"
+    }
+    service_key => "799aa86********************"
+    incident_key => "logstash/%{text}/%{loglevel}"
+  }
+}

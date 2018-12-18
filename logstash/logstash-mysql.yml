@@ -1,0 +1,22 @@
+input {
+  jdbc {
+    jdbc_driver_library => "/usr/share/java/jar-original/mysql-connector-java.jar"
+    jdbc_driver_class => "com.mysql.jdbc.Driver"
+    jdbc_connection_string => "jdbc:mysql://host:3306/db_name?autoReconnect=true&useSSL=false"
+    jdbc_user => "user"
+    jdbc_password => "password"
+    schedule => "* * * * *"
+    statement => "show tables;"
+  }
+}
+
+output {
+  stdout { codec => rubydebug }
+  http {
+          url => "https://hooks.slack.com/service/***/channel"
+          http_method => "post"
+          format => "message"
+          message => '{"text":"*%{hostgroup}* -  *%{username}*"}'
+      }
+}
+

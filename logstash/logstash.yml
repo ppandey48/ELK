@@ -1,0 +1,17 @@
+input { 
+  stdin { } 
+  }
+
+filter {
+  grok {
+    match => { "message" => "\[(?<timestamp>%{TIMESTAMP_ISO8601})\] %{LOGLEVEL:loglevel} %{GREEDYDATA:jsondata}  ..%{PATH:file}" }
+    }
+  kv { 
+    source => "message", 
+    value_split => ":\s*" 
+    field_split => ", "
+    }
+  }
+output {
+  stdout { codec => rubydebug }
+}

@@ -1,0 +1,30 @@
+input {
+  stdin {}
+}
+
+filter {
+  grok {
+    match => { "message" => ["\[%{TIMESTAMP_ISO8601:time_stamp}\] %{LOGLEVEL:loglevel} %{GREEDYDATA:json}  %{GREEDYDATA:file}"] }  
+  }
+  if "_grokparsefailure" in [tags] {
+      grok {
+        match => { "message" => "\[%{TIMESTAMP_ISO8601:time_stamp}\] %{LOGLEVEL:loglevel} %{GREEDYDATA:error} => [\S+\s+]+ %{GREEDYDATA:file}" }
+      }
+  }
+  kv { 
+    source => "json" 
+    value_split => ":"
+    field_split => ","
+    remove_char_value => "\""
+    remove_char_key => "\""
+    trim_key => "\{" 
+  } 
+  mutate { 
+    remove_field => [ "message", "json"] 
+  }  
+}	
+
+output {
+  stdout { codec => rubydebug }
+
+}

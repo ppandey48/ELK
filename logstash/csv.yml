@@ -1,0 +1,66 @@
+#configuration for pagerduty alerts
+
+input {
+  stdin { }
+}
+
+filter {
+  grok {
+    match => { "message" => ["\[%{TIMESTAMP_ISO8601:timestamp}\] %{LOGLEVEL:loglevel} %{DATA:logger} \[%{DATA:multiplevalues}\] %{DATA:messages} - %{GREEDYDATA:jsonvalue}"] }  
+  }
+  date {
+    match => [ "timestamp", "ISO8601" ]
+    target => "timestamp"
+  }
+  json {
+      source => "jsonvalues"
+  }
+  kv {
+    source => ["multiplevalue"]
+    value_split => ":"
+    field_split => ", "
+    trim_key => " "
+  }
+  if [message] == "some-text" or [message] == "something-else" {
+     aggregate {
+       task_id => "%{id}"
+       code => "
+         map['status'] = event.get('status')
+         map['email'] = event.get('email')
+         map['url'] = event.get('url')
+         map['bucket'] = event.get('bucket')
+         map['id'] = event.get('[data][user]')     
+         "
+       map_action => "create"
+     }
+   }
+
+   if [text] == "get-something" {
+     aggregate {
+       task_id => "%{id}"
+       code => "
+         map['vm'] = event.get('[data][id]')
+         map['vmip'] = event.get('[vm][ipv4]')
+         map['duration'] = event.get('duration')"
+       map_action => "create"
+     }
+   }
+
+   if [text] == "something" {
+     aggregate {
+       task_id => "%{id}"
+       code => "map['duration'] = event.get('[data][start]') - event.get('[data][end]')"
+       map_action => "update"
+       timeout => 240
+     }
+   }
+}
+
+output {
+ stdout { codec => rubydebug } 
+ csv {
+   path => "/home/prashant/file.csv"
+   fields => ["id" ,"status","email","url","bucket","[data][id]","[data][id]", "[data][id]","[data][start]","[data][end]"]
+   #codec => line { format => "custom format: %{message}"}
+ }
+}

@@ -1,0 +1,27 @@
+input {
+  stdin {
+    codec => multiline {
+      pattern => "^\s+"
+      what => "previous"
+    }
+  }
+}
+
+filter {
+  grok {
+    match => { "message" => ["\[%{TIMESTAMP_ISO8601:time}\] %{LOGLEVEL:loglevel} %{DATA:method}: %{GREEDYDATA:data}\n %{GREEDYDATA:exception}"] }   
+  }
+  #kv {
+  #  source => "data"
+  #  value_split => ":"
+  #  field_split => ", "
+  #}
+  #mutate {
+  #  remove_field => "message"
+  #}
+}	
+
+output {
+  stdout { codec => rubydebug }
+
+}

@@ -1,0 +1,32 @@
+#logs for nginx access log file
+
+input { 
+  stdin { }
+}
+
+filter {
+  
+  grok {
+    match => { "message" => ["%{IP:ip} - - \[%{HTTPDATE:timestamp}\] \"%{DATA:method} %{GREEDYDATA:path} %{DATA:version}\" %{INT:status} %{INT:bytes} \"%{GREEDYDATA:url}\" \"%{GREEDYDATA:useragent}\"?"] }
+  }
+  if "_grokparsefailure" in [tags] {
+      grok {
+        match => { "message" => ["%{IP:ip} - - \[%{HTTPDATE:timestamp}\] \"%{DATA:method} %{PATH:path} %{DATA:version}\" %{INT:status} %{INT:bytes} %{GREEDYDATA:text}"] }
+      }
+  }
+  if ".svg" in [path] or ".jpg" in [path] or ".png" in [path] { 
+    drop { }
+  }
+  kv { 
+    source => "useragent" 
+    trim_key => " "
+    trim_value => "\"" 
+  }
+  mutate {
+    remove_field => "message"
+  } 
+}
+
+output {
+  stdout { codec => rubydebug }
+}

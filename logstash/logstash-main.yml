@@ -1,0 +1,39 @@
+input {
+#  stdin { 
+#    type => "stdin-type"
+  #  codec => multiline {
+  #     pattern => "^\[%{TIMESTAMP_ISO8601}\]"
+  #     negate => true
+  #     what => previous
+  #     auto_flush_interval => 1
+    # }
+# }
+  file {
+    path => "/var/log/syslog"
+#    type => "stdin-type"
+#    codec => multiline {
+#       pattern => "^\[%{TIMESTAMP_ISO8601}\]"
+#       negate => true
+#       what => previous
+#       auto_flush_interval => 1
+#     }
+  }
+ 
+}
+
+filter { 
+#  if [type] == "stdin-type" {
+    grok {
+      match => { "message" => "%{TIMESTAMP_ISO8601:time} %{GREEDYDATA:message}" }
+   }
+# }
+#    if "_grokparsefailure" in [tags] {
+#      grok {
+#        match => { "message" => "%{INT:index}: %{DATA:data}: %{GREEDYDATA:message}: %{PATH:file_path}" }
+#   }
+
+# }
+}
+output {
+ stdout { codec => rubydebug }
+}

@@ -1,0 +1,27 @@
+#for catalina logs
+
+input { 
+  stdin { }
+}
+
+filter {
+  
+  grok {
+    match => { "message" => ["%{TIME:timestamp} \[%{GREEDYDATA:data}\] %{LOGLEVEL:loglevel} %{GREEDYDATA:logger} - %{GREEDYDATA:text}"] }
+  }
+  kv { 
+    source => "text" 
+    #value_split => "="
+    #field_split => ";"
+    #trim_key => " "
+    trim_value => "\n"
+  }
+  mutate {
+    gsub => ["text", "\n", " "]
+    remove_field => ["message"]
+  } 
+}
+
+output {
+  stdout { codec => rubydebug }
+}

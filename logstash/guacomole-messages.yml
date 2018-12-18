@@ -1,0 +1,123 @@
+input { 
+  stdin { }
+}
+
+filter {
+  grok {
+    match => { "message" => "\[(?<timestamp>%{TIMESTAMP_ISO8601})\] %{LOGLEVEL:loglevel} %{GREEDYDATA:json}  %{GREEDYDATA:file}" }
+  }
+  date {
+    match => [ "timestamp", "ISO8601" ]
+    target => "timestamp"
+  }
+  kv { 
+    source => "json" 
+    value_split => ":"
+    field_split => ","
+    remove_char_value => "\""
+    remove_char_key => "\""
+    trim_key => "\{" 
+  }     
+  if [code] == "200" {
+    mutate { 
+      add_field => { "status" => "SUCCESS" }
+    }
+  } else if [code] == "256" {
+      mutate { 
+        add_field => { "status" => "UNSUPPORTED" }
+      }
+  } else if [code] == "512" {
+      mutate { 
+        add_field => { "status" => "SERVER_ERROR" }
+      }
+  } else if [code] == "513" {
+      mutate { 
+        add_field => { "status" => "SERVER_BUSY" }
+      }
+  } else if [code] == "514" {
+      mutate { 
+        add_field => { "status" => "UPSTREAM_TIMEOUT" }
+      }
+  } else if [code] == "515" {
+      mutate { 
+        add_field => { "status" => "UPSTREAM_ERROR" }
+      }
+  } else if [code] == "516" {
+      mutate { 
+        add_field => { "status" => "RESOURCE_NOT_FOUND" }
+      }
+  } else if [code] == "517" {
+      mutate { 
+        add_field => { "status" => "RESOURCE_CONFLICT" }
+      }
+  } else if [code] == "518" {
+      mutate { 
+        add_field => { "status" => "RESOURCE_CLOSED" }
+      }
+  } else if [code] == "519" {
+      mutate { 
+        add_field => { "status" => "UPSTREAM_NOT_FOUND" }
+      }
+  } else if [code] == "520" {
+      mutate { 
+        add_field => { "status" => "UPSTREAM_UNAVAILABLE" }
+      }
+  } else if [code] == "521" {
+      mutate { 
+        add_field => { "status" => "SESSION_CONFLICT" }
+      }
+  } else if [code] == "522" {
+      mutate { 
+        add_field => { "status" => "SESSION_TIMEOUT" }
+      }
+  } else if [code] == "523" {
+      mutate { 
+        add_field => { "status" => "SESSION_CLOSED" }
+      }
+  } else if [code] == "768" {
+      mutate { 
+        add_field => { "status" => "CLIENT_BAD_REQUEST" }
+      }
+  } else if [code] == "769" {
+      mutate { 
+        add_field => { "status" => "CLIENT_UNAUTHORIZED" }
+      }
+  } else if [code] == "771" {
+      mutate { 
+        add_field => { "status" => "CLIENT_FORBIDDEN" }
+      }
+  } else if [code] == "776" {
+      mutate { 
+        add_field => { "status" => "CLIENT_TIMEOUT" }
+      }
+  } else if [code] == "781" {
+      mutate { 
+        add_field => { "status" => "CLIENT_OVERRUN" }
+      }
+  } else if [code] == "783" {
+      mutate { 
+        add_field => { "status" => "CLIENT_BAD_TYPE" }
+      }
+  } else if [code] == "797" {
+      mutate { 
+        add_field => { "status" => "CLIENT_TOO_MANY" }
+      }
+  } else {
+      mutate { 
+        add_field => { "status" => "Code Not Matched" }
+      }
+  }
+  mutate { 
+    remove_field => [ "message", "json"] 
+    add_field => { 
+      "index_prefix" => "index-name"
+      "document_type" => "logs"
+    }
+  } 
+}
+
+output {
+  stdout {
+    codec => rubydebug
+  }
+}
